@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zerock.mapper.BoardMapper">
+
+	<!-- board 목록 가져오기 -->
+	<select id="getList" resultType="org.zerock.domain.BoardVO">
+		<![CDATA[
+		SELECT * FROM tbl_board WHERE bno > 0
+		]]>
+	</select>
+	
+	<sql id="criteria">
+		<trim prefix="AND (" suffix=")" prefixOverrides="OR">
+			<foreach item='type' collection="typeArr"> <!-- 6가지 조합을 위한 로직 -->
+				<trim prefix="OR">
+					<choose>
+						<when test="type == 'T'.toString()">
+							title LIKE CONCAT('%', #{keyword}, '%')
+						</when>
+						<when test="type == 'C'.toString()">
+							content LIKE CONCAT('%', #{keyword}, '%')
+						</when>
+						<when test="type == 'W'.toString()">
+							writer LIKE CONCAT('%', #{keyword}, '%')
+						</when>
+					</choose>
+				</trim>
+			</foreach>
+		</trim>
+	</sql>
+	
+	<select id="getListWithPaging" resultType="org.zerock.domain.BoardVO">
+		<![CDATA[	
+		SELECT 
+			bno, title, content, writer, regdate, updatedate
+		FROM (
+			SELECT
+				rn, bno, title, content, writer, regdate, updatedate
+			FROM (
+				SELECT 
+					ROW_NUMBER() OVER(ORDER BY bno DESC) AS rn,
+					bno, title, content, writer, regdate, updatedate
+				FROM tbl_board
+		]]> 
+				<where>
+					<include refid="criteria"></include> <!-- 인라인 뷰 안쪽에서 필요한 데이터를 가져올 때 검색 조건이 적용되어야 한다 -->
+				</where>
+		<![CDATA[
+			) A 
+			WHERE rn <= #{pageNum} * #{amount}
+		) AA
+		WHERE rn > (#{pageNum}-1) * #{amount}
+		]]>
+	</select>
+	
+	<select id="getTotalCount" resultType="int">
+		SELECT COUNT(*) FROM tbl_board 
+		<where> <!-- criteria 조건이 없어도 오류가 나지 않도록 WHERE 태그 사용 -->
+			<include refid="criteria"></include>
+			AND bno > 0
+		</where>
+	</select>
+	
+	<!-- 8.2 영속 영역의 CURD 구현  -->
+	<!-- 8.2.1 CREATE(INSERT) 처리 : 아래 두 방법은 병행 불가(PK 중복오류 발생)-->
+	<!-- PK 컬럼이 auto_increment 속성을 가지는 경우 자동으로 증가 -->
+	<insert id="insert">
+		INSERT INTO tbl_board (title, content, writer)
+		VALUES (#{title}, #{content}, #{writer})
+	</insert>
+	
+	<!-- inert 문이 실행되고 생성된 PK 값 알아야 하는 경우 <selectKey> 사용 -->
+	<insert id="insertSelectKey">
+		<selectKey keyProperty="bno" order="BEFORE" resultType="long">
+			SELECT NEXTVAL(seq_board) FROM DUAL
+		</selectKey>
+		INSERT INTO tbl_board (bno, title, content, writer)
+		VALUES (#{bno}, #{title}, #{content}, #{writer})
+	</insert>
+	
+	<!-- 8.2.2 READ(SELECT) 처리 -->
+	<select id="read" resultType="org.zerock.domain.BoardVO">
+		SELECT * FROM tbl_board WHERE bno = #{bno}
+	</select>
+	
+	<!-- 8.2.3 DELETE 처리 -->
+	<delete id="delete">
+		DELETE FROM tbl_board WHERE bno = #{bno}
+	</delete>
+
+	<update id="update">
+		UPDATE tbl_board
+		SET 
+			title = #{title}
+			, content = #{content}
+			, writer = #{writer}
+			, updateDate = now()
+		WHERE bno = #{bno}
+	</update>
+	
+</mapper>
+
