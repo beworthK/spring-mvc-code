@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+	<!-- DispatcherServlet Context: defines this servlet's request-processing infrastructure -->
+	
+	<!-- Enables the Spring MVC @Controller programming model -->
+	<annotation-driven />
+
+	<resources mapping="/resources/**" location="/resources/" />
+
+	<!-- Resolves views selected for rendering by @Controllers to .jsp resources in the /WEB-INF/views directory -->
+	<beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+	</beans:bean>
+
+	<!-- 파일 업로드 -->
+	<!-- 
+	<beans:bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<beans:property name="defaultEncoding" value="utf-8"></beans:property>
+		maxUploadSize : 한 번의 Request 로 전달 될 수 있는 최대의 크기 (1024 * 1024 * 10 bytes 10MB)
+		<beans:property name="maxUploadSize" value="104857560"></beans:property>
+		maxUploadSizePerFile : 하나의 파일 최대 크기 (1024 * 1024 * 2 bytes 2MB)
+		<beans:property name="maxUploadSizePerFile" value="2097152"></beans:property>
+		uploadTempDir : maxUploadSizePerFile 크기 이상의 데이터가 들어오는 경우 임시데이터 형태로 보관
+		<beans:property name="uploadTempDir"
+						value="file:/D:/Projects/spring-web-code/upload/tmp"></beans:property>
+		<beans:property name="maxInMemorySize" value="1048756"></beans:property>	
+	</beans:bean>
+ -->	
+ 
+ 	<context:component-scan base-package="org.zerock.controller" />
+	<context:component-scan base-package="org.zerock.exception" />
+	
+	
+</beans:beans>
