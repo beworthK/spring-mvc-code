@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zerock.mapper.BoardMapper">
+
+	<select id="getList" resultType="org.zerock.domain.BoardVO">
+		<![CDATA[
+		SELECT * FROM tbl_board WHERE bno > 0
+		]]>
+	</select>
+	
+	<sql id="criteria">
+		<trim prefix="AND (" suffix=")" prefixOverrides="OR">
+			<foreach item='type' collection="typeArr"> <!-- 6가지 검색 조합을 위한 로직 -->
+				<trim prefix="OR">
+					<choose>
+						<when test="type == 'T'.toString()">
+							title LIKE CONCAT('%', #{keyword}, '%')
+						</when>
+						<when test="type == 'C'.toString()">
+							content LIKE CONCAT('%', #{keyword}, '%')
+						</when>
+						<when test="type == 'W'.toString()">
+							writer LIKE CONCAT('%', #{keyword}, '%')
+						</when>
+					</choose>
+				</trim>
+			</foreach>
+		</trim>
+	</sql>
+	
+	<select id="getListWithPaging" resultType="org.zerock.domain.BoardVO">
+		<![CDATA[	
+		SELECT 
+			bno, title, content, writer, regdate, updatedate, replyCnt
+		FROM (
+			SELECT
+				rn, bno, title, content, writer, regdate, updatedate, replyCnt
+			FROM (
+				SELECT 
+					ROW_NUMBER() OVER(ORDER BY bno DESC) AS rn,
+					bno, title, content, writer, regdate, updatedate, replyCnt
+				FROM tbl_board
+		]]> 
+				<where>
+					<include refid="criteria"></include>
+				</where>
+		<![CDATA[
+			) A 
+			WHERE rn <= #{pageNum} * #{amount}
+		) AA
+		WHERE rn > (#{pageNum}-1) * #{amount}
+		]]>
+	</select>
+	
+	<select id="getTotalCount" resultType="int">
+		SELECT COUNT(*) FROM tbl_board 
+		<where>
+			<include refid="criteria"></include>
+			AND bno > 0
+		</where>
+	</select>
+	
+	<!-- inert 문이 실행되고 생성된 PK 값 알아야 하는 경우 <selectKey> 사용 -->
+	<insert id="insertSelectKey">
+		<selectKey keyProperty="bno" order="BEFORE" resultType="long">
+			SELECT NEXTVAL(seq_board) FROM DUAL
+		</selectKey>
+		INSERT INTO tbl_board (bno, title, content, writer)
+		VALUES (#{bno}, #{title}, #{content}, #{writer})
+	</insert>
+	
+	<select id="read" resultType="org.zerock.domain.BoardVO">
+		SELECT * FROM tbl_board WHERE bno = #{bno}
+	</select>
+	
+	<delete id="delete">
+		DELETE FROM tbl_board WHERE bno = #{bno}
+	</delete>
+
+	<update id="update">
+		UPDATE tbl_board
+		SET 
+			title = #{title}
+			, content = #{content}
+			, writer = #{writer}
+			, updateDate = now()
+		WHERE bno = #{bno}
+	</update>
+	
+	<update id="updateReplyCnt">
+		UPDATE tbl_board
+		SET 
+			replyCnt = replyCnt + #{amount} 
+		WHERE bno = #{bno}
+	</update>
+	
+</mapper>
+
