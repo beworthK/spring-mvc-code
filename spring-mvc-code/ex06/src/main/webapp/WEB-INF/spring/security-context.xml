@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/security 
+		http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd">
+		
+	<bean id="customAccessDenied" class="org.zerock.security.CustomAccessDeniedHandler"></bean>	
+	<bean id="customLoginSuccess" class="org.zerock.security.CustomLoginSuccessHandler"></bean>
+	
+	<!-- PasswordEncoder -->	
+	<!-- <bean id="customPasswordEncoder" class="org.zerock.security.CustomNoOpPasswordEncoder"></bean> -->
+	<!-- bcrypt : 패스워드를 저장하는 용도로 설계된 해시 함수. 
+				  특정 문자열을 암호화 하고 체크하는 쪽에서는 암호화된 패스워드가 가능한 패스워드인지만 확인하고 원문으로 되돌리지는 못한다. -->
+	<bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+	
+	<!-- 스프링 시큐리티의 UserDetailsService 구현 -->
+	<bean id="customUserDetailsService" class="org.zerock.security.CustomUserDetailsService" />
+	
+		
+	<!-- 스프링 시큐리티 시작지점 -->
+	<security:http>
+		<!-- 인터셉터를 이용한 접근제한 설정 -->
+		<security:intercept-url pattern="/sample/all" access="permitAll" />
+		<security:intercept-url pattern="/sample/member" access="hasRole('ROLE_MEMBER')" />
+		<security:intercept-url pattern="/sample/admin" access="hasRole('ROLE_ADMIN')" />
+	
+		<!-- 스프링 시큐리티에서는 접근제한에 대해서 AccessDeniedHandler를 직접 구현하거나 특정한 URI로 지정할 수 있다 -->
+		<!-- <security:access-denied-handler error-page="/accessError/"/> 
+				에러페이지만을 제공하는 방식으로 사용자가 접근했던 URI 자체의 변화는 없다
+				*사용자가 접근했던 url 자체는 '/sample/admin' 으로 되어 있고, 
+				화면의 내용은 '/accessError'에 해당하는 URI 의 결과이다
+		-->
+		<security:access-denied-handler ref="customAccessDenied" /> <!-- 직접 구현 방식 bean 으로 등록해서 사용한다(위 bean 태그 코드 참조) -->
+		
+	
+		<!-- security:form-login/> -->
+		<security:form-login login-page="/customLogin" 
+			authentication-success-handler-ref="customLoginSuccess" /> <!-- CustomLoginSuccessHandle 지정  -->
+		
+		<!-- 로그아웃 로직 직접 처리 
+			invalidate-session : 세션 삭제여부
+			delete-cookies : 로그아웃을 하면 자동 로그인에 사용하는 쿠키도 삭제 
+			                 (JSESSION_ID = WAS 가 발행하는 쿠키 이름, 굳이 지정할 필요는 없지만, 관련된 쿠키는 모두 삭제해주는게 좋다)
+		-->
+		<security:logout logout-url="/customLogout" invalidate-session="true" 
+			delete-cookies="remember-me, JSESSION_ID"/>
+		
+		<!-- CSRF : 스프링 시큐리티 CSRF 설정 (기본값:CSRF 활성화 - Spring Security 4.0부터)-->
+		<!-- <security:csrf disabled="true"/> 비활성화 하고 싶으면 이 코드 추가-->
+		<!-- - false = CSRF 사용  
+			 - true(CSRF 보호 비활성화) 안하면 /customLogout 안탐
+			  ㄴ CSRF 보호를 활성화하면 Spring Security는 기본적으로 모든 POST 요청에 CSRF 토큰을 필요로 하기 때문에, 
+			    기본적으로 security:logout은 GET 요청을 사용하여 로그아웃을 처리
+			    로그아웃도 이 규칙에 따라 CSRF 토큰이 필요하게 됩니다. => security:logout 로직 안타는 이유
+			    ( Adding CSRF will update the LogoutFilter to [only use HTTP POST]. 
+			     This ensures that log out requires a CSRF token and that a malicious user cannot forcibly log out your users.
+				 출처 : https://docs.spring.io/spring-security/site/docs/5.0.x/reference/html/csrf.html )
+		-->
+		 
+		 <!-- 자동 로그인(remember-me) - 데이터베이스를 이용하는 자동로그인
+		 	data-source-ref : DataSource를 지정하고 테이블을 이용해서 기존 로그인 정보를 기록
+		 	token-validity-seconds : 쿠키의 유효시간 지정
+		 	
+		 	그 외 속성
+		 	key : 쿠키에 사용되는 값을 암호화하기 위한 키(key) 값
+		 	remember-me-cookie : 브라우저에 보관되는 쿠키의 이름을 지정 (기본값 = 'remember-me')
+		 	remember-me-parameter : 웹 화면에서 로그인할 때, 'remember-me' 는 대부분 체크박스를 이용해서 처리
+		 -->
+		 <security:remember-me data-source-ref="dataSource" token-validity-seconds="604800" /><!-- 604800 = 1주일 -->
+		 
+		 
+	</security:http>
+	
+	
+	<!-- 스프링 시큐리티에서 인증을 담당하는 인증 매니저 -->
+	<security:authentication-manager>
+	
+		<!-- UserDetailsService(user-service) 이용한 방식  -->
+		<!-- 
+		<security:authentication-provider> provider : 인증이나 권한정보를 제공하는 존재
+			<security:user-service> 
+				인증과 권한부여(=인가)에 대한 '실제'처리는 UserDetailsService 를 이용해서 처리한다
+				{noop} - 패스워드의 인코딩 처리 없이 사용하고자 할 때 앞에 붙인다
+				<security:user name="member" password="{noop}member" authorities="ROLE_MEMBER"/> 
+				
+				admin 사용자(=name 값)가 ROLE_MEMBER, ROLE_ADMIN 2 개의 권한을 가지도록 지정한다 
+					 => /sample/member 와 /sample/admin 모두에 접근할 수 있다
+				<security:user name="admin" password="{noop}admin" authorities="ROLE_MEMBER, ROLE_ADMIN"/> 
+			</security:user-service>
+		</security:authentication-provider>
+		-->
+			
+		
+		<!-- JDBC 를 이용하는 간편 인증/권한 처리 -->
+		<!-- <security:authentication-provider> 
+			쿼리를 이용하는 인증
+				인증 : users-by-username-query
+				인가 : authorities-by-username-query
+			<security:jdbc-user-service data-source-ref="dataSource" 
+				users-by-username-query="select userid, userpw, enabled from tbl_member where userid = ? " 
+				authorities-by-username-query="select userid, auth from tbl_member_auth where userid = ? " 
+			/>
+			
+			password encoder 지정 
+			<security:password-encoder ref="customPasswordEncoder" />
+		 	<security:password-encoder ref="bcryptPasswordEncoder" />  change to Bcrypt customPasswordEncoder
+ 		
+ 		</security:authentication-provider> -->
+		
+		
+		<!-- UserDetailService 인터페이스를 구현한 방식 -->
+		<security:authentication-provider user-service-ref="customUserDetailsService">
+			<security:password-encoder ref="bcryptPasswordEncoder" />
+		</security:authentication-provider>
+			
+		
+	</security:authentication-manager>
+
+	
+
+</beans>
