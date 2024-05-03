@@ -49,7 +49,7 @@
   *  파일 업로드 상세 처리 - 이미지 파일은 썸네일 이미지를 생성하도록 구현
   *  잘못 업로드된 파일 정리 - Quartz 라이브러리를 활용한 실제 파일과 DB 일관성 유지
 
-* Part 7-1. Spring Web Security 를 이용한 로그인 처리 - 진행중[바로가기](https://github.com/beworthK/spring-mvc-code/tree/main/spring-mvc-code/ex06)<br>
+* Part 7-1. Spring Web Security 를 이용한 로그인 처리 - [바로가기](https://github.com/beworthK/spring-mvc-code/tree/main/spring-mvc-code/ex06)<br>
   > 스프링 웹 시큐리티를 이용하여, 사용자 권한이나 등급에 기반을 두는 로그인 체크 이용<br>
   *  로그인 처리와 CSRF 토큰 처리 적용
   *  암호화 처리 
