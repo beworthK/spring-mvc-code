@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+		
+		
+	<bean id="customAccessDenied" class="org.zerock.security.CustomAccessDeniedHandler"></bean>
+	
+	<!-- bcrypt : 패스워드를 저장하는 용도로 설계된 해시 함수 -->
+	<bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+	
+	<bean id="customUserDetailsService" class="org.zerock.security.CustomUserDetailsService" />
+	
+	<!-- 스프링 시큐리티 시작지점 -->
+	<security:http>
+		<!-- 인터셉터를 이용한 접근제한 설정 -->
+		<security:intercept-url pattern="/sample/all" access="permitAll" />
+		<security:intercept-url pattern="/sample/member" access="hasRole('ROLE_MEMBER')" />
+		<security:intercept-url pattern="/sample/admin" access="hasRole('ROLE_ADMIN')" />
+	
+		<security:access-denied-handler ref="customAccessDenied" />
+		
+		<!-- CustomLoginSuccessHandle 사용안함 
+			스프링 시큐리티는 기본적으로 로그인 후 처리를 SavedRequestAwareAuthenticationSuccessHandler 라는 클래스를 이용한다
+			 ㄴ 로그인전 방문한 페이지를 기록했다가 로그인 후 해당 페이지를 띄워주는 것
+			태그의 속성을 삭제하고, 관련 스프링 빈도 설정하지 않는다
+			=> 게시물 작성 시, 로그인 페이지로 이동하고 로그인 후 다시 게시물 작성페이지로 이동하는 방식 적용
+		-->
+		<security:form-login login-page="/customLogin" /> 
+		
+		<!-- 로그아웃 로직 직접 처리 -->
+		<security:logout logout-url="/customLogout" invalidate-session="true" delete-cookies="remember-me, JSESSION_ID"/>
+
+		<!-- 자동 로그인(remember-me) - 데이터베이스를 이용하는 자동로그인 -->
+		<security:remember-me data-source-ref="dataSource" token-validity-seconds="604800" /><!-- 604800 = 1주일 -->
+		 
+	</security:http>
+	
+	<!-- 
+		스프링 시큐리티에서 인증을 담당하는 인증 매니저 
+		스프링 시큐리티가 동작하기 위해서는 authentication-manager 라는 시작지점이 필요하다.
+		ㄴ 설정 안하면 springSecurityFilterChain 을 찾을 수 없다는 오류가 난다
+	-->
+	<security:authentication-manager>
+		<security:authentication-provider user-service-ref="customUserDetailsService">
+			<security:password-encoder ref="bcryptPasswordEncoder" />
+		</security:authentication-provider>
+	</security:authentication-manager>
+
+</beans>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zerock.mapper.ReplyMapper">
+
+	<select id="getListWithPaging" resultType="org.zerock.domain.ReplyVO">
+		<!-- #{bno} = ReplyMapper 의 getListWithPaging 메소드에서 @Param("bno")와 매칭 -->
+		<![CDATA[
+		SELECT
+			rno, bno, reply, replyer, replyDate, updatedate
+		FROM( -- AA
+			SELECT *
+			FROM (
+				SELECT 
+					ROW_NUMBER() OVER(ORDER BY rno ASC) AS rn,
+					rno, bno, reply, replyer, replyDate, updatedate 
+				FROM tbl_reply 
+				WHERE bno = #{bno} 
+			) A
+			WHERE rn <= #{cri.pageNum} * #{cri.amount}
+		) AA
+		WHERE rn > (#{cri.pageNum}-1) * #{cri.amount}
+		]]>
+	</select>
+	
+	<select id="getCountByBno" resultType="int">
+		SELECT COUNT(rno) FROM tbl_reply WHERE bno = #{bno}
+	</select>
+	
+	
+	<insert id="insert">
+		<selectKey keyProperty="rno" order="BEFORE" resultType="long">
+			SELECT NEXTVAL(seq_reply) FROM DUAL
+		</selectKey>
+		INSERT INTO tbl_reply (rno, bno, reply, replyer)
+		VALUES (#{rno}, #{bno}, #{reply}, #{replyer})
+	</insert>
+
+	<select id="read" resultType="org.zerock.domain.ReplyVO">
+		SELECT * FROM tbl_reply WHERE rno = #{rno}
+	</select>
+	
+	<delete id="delete">
+		DELETE FROM tbl_reply WHERE rno = #{rno}
+	</delete>
+
+	<update id="update">
+		UPDATE tbl_reply
+		SET 
+			reply = #{reply}
+			, updateDate = now()
+		WHERE rno = #{rno}
+	</update>
+	
+</mapper>
+
