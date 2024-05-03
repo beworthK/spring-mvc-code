@@ -55,7 +55,7 @@
   *  암호화 처리 
   *  자동 로그인 구현
 
-* Part 7-2. 기존 프로젝트(Part 6)에 Spring Web Security 접목하기 - 진행중<br>
+* Part 7-2. 기존 프로젝트(Part 6)에 Spring Web Security 접목하기 - [바로가기](https://github.com/beworthK/spring-mvc-code/tree/main/spring-mvc-code/ex06_2)<br>
   *  로그인과 회원 가입 페이지 작성
   *  기존 화면과 컨트롤러에 시큐리티 관련 내용 추가
   *  Ajax 부분 변경
