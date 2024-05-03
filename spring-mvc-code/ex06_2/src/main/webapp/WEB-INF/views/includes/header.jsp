@@ -1,3 +1,5 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://www.springframework.org/security/tags" prefix="sec" %>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -25,7 +27,7 @@
     <link href="/resources/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
 
-	<!-- jQuery : 성능을 조금 손해보더라도, header에 jQuery 를 선언해두며, 작성하는 JSP 내에서 자유롭게 사용할 수 있다 -->
+	<!-- jQuery : ì±ë¥ì ì¡°ê¸ ìí´ë³´ëë¼ë, headerì jQuery ë¥¼ ì ì¸í´ëë©°, ìì±íë JSP ë´ìì ìì ë¡­ê² ì¬ì©í  ì ìë¤ -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -255,8 +257,15 @@
                         <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a>
                         </li>
                         <li class="divider"></li>
-                        <li><a href="login.html"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
-                        </li>
+                        <!-- logout -->
+                        <sec:authorize access="isAuthenticated()">
+                        	<li><a href="/customLogout"><i class="fa fa-sign-out fa-fw"></i> Logout</a></li>
+                        </sec:authorize>
+                        
+                        <!-- login -->
+                        <sec:authorize access="isAnonymous()">
+                        	<li><a href="/customLogout"><i class="fa fa-sign-out fa-fw"></i> Login</a></li>
+                        </sec:authorize>
                     </ul>
                     <!-- /.dropdown-user -->
                 </li>
