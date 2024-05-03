@@ -91,7 +91,7 @@ public class ReplyController {
 	 * 17.3.4 댓글 삭제
 	 * @DeleteMapping
 	 * @PreAuthorize - 현재 로그인한 사용자 = 댓글 작성자 면 댓글 삭제 가능
-	 * 파라미터에 @RequestBody 어노테이션을 적용하여 JSON 으로 된 데이터를 받는다 
+	 *  ㄴ 파라미터에 @RequestBody 어노테이션을 적용하여 JSON 으로 된 데이터를 받는다 
 	 */
 	@PreAuthorize("principal.username == #vo.replyer")
 	@DeleteMapping("/{rno}")
@@ -99,10 +99,10 @@ public class ReplyController {
 		
 		log.info("remove: " + rno);
 		log.info("replyer: " + vo.getReplyer());
-		
+
 		return service.remove(rno) == 1 
-				? new ResponseEntity<>("success", HttpStatus.OK) 
-				: new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); 
+				? new ResponseEntity<>("success", HttpStatus.OK)
+				: new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 	
 	/*

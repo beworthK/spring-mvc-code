@@ -424,7 +424,7 @@ $(document).ready(function(){
 		//--------------------------------------------------
 		// 댓글 삭제 시 rno(댓글번호)와 댓글 작성자를 함께 전송
 		//--------------------------------------------------
-		replyService.remove(rno, rno, originalReplyer, function(result){
+		replyService.remove(rno, originalReplyer, function(result){
 	   	      alert(result);
 	   	      modal.modal("hide");
 	   	      showList(pageNum);
